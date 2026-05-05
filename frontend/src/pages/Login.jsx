@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Activity, Shield, Lock, Eye, ArrowLeft } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 import { auth } from "@/lib/firebase";
-import { RecaptchaVerifier, signInWithPhoneNumber, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
 
 export default function Login() {
   const { user, loginWithPhone } = useAuth();
@@ -16,102 +16,97 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!window.recaptchaVerifier && step === "phone") {
-      try {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          size: 'invisible',
-        });
-      } catch (e) {
-        console.error("Recaptcha error:", e);
-      }
-    }
-  }, [step]);
-
   if (user) return <Navigate to="/" replace />;
 
+  // ── Google Login ──────────────────────────────────────────────────────────
   const handleGoogleLogin = async () => {
+    setError("");
+    setLoading(true);
     try {
-      setLoading(true);
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      
-      // Successfully authenticated with Firebase Google Auth!
-      // Now bridge to the Chameleon backend using our override
-      // In a real app we'd pass the Firebase ID token to the backend.
-      // Here we just use the phone bypass logic to establish the session.
-      const fakePhone = result.user.email || "google_user";
-      const success = await loginWithPhone(fakePhone, "123456");
-      
+      provider.setCustomParameters({ prompt: "select_account" });
+
+      let firebaseUser = null;
+      try {
+        // Try popup first (works in most environments)
+        const result = await signInWithPopup(auth, provider);
+        firebaseUser = result.user;
+      } catch (popupErr) {
+        // Popup blocked or not supported → fall back to redirect
+        if (
+          popupErr.code === "auth/popup-blocked" ||
+          popupErr.code === "auth/popup-closed-by-user" ||
+          popupErr.code === "auth/cancelled-popup-request"
+        ) {
+          // Redirect will reload the page; handle result on next load
+          await signInWithRedirect(auth, provider);
+          return; // page will reload
+        }
+        throw popupErr; // real error, surface it
+      }
+
+      if (!firebaseUser) throw new Error("No Firebase user returned.");
+
+      const identifier = firebaseUser.email || firebaseUser.uid || "google_user";
+      const success = await loginWithPhone(identifier, "123456");
       if (success) {
         navigate("/");
       } else {
-        setError("Dashboard verification failed.");
+        setError("Backend session creation failed. Try again.");
       }
     } catch (err) {
-      console.error(err);
-      setError("Google Login failed.");
+      console.error("Google login error:", err);
+      setError(err.message || "Google Login failed. Check your network and try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSendCode = async () => {
-    if (phone.length < 10) {
-      setError("Enter a valid phone number (include country code like +1)");
+  // ── Phone Login ───────────────────────────────────────────────────────────
+  // We skip Firebase SMS entirely because:
+  //  • SMS quota / billing not guaranteed on all Firebase plans
+  //  • Domain must be whitelisted for phone auth
+  //  • Backend already uses a fixed demo code ("123456") for verification
+  // Users enter their phone + the demo access code and we hit the backend directly.
+
+  const handleSendCode = () => {
+    if (phone.trim().length < 5) {
+      setError("Enter a valid phone number.");
       return;
     }
     setError("");
-    setLoading(true);
-    
-    try {
-      const appVerifier = window.recaptchaVerifier;
-      const confirmationResult = await signInWithPhoneNumber(auth, phone, appVerifier);
-      window.confirmationResult = confirmationResult;
-      setLoading(false);
-      setStep("otp");
-    } catch (err) {
-      console.error(err);
-      setError("Failed to send SMS. Ensure number includes country code (e.g., +15551234567).");
-      setLoading(false);
-    }
+    setStep("otp");
   };
 
   const handleVerifyOtp = async () => {
-    if (otp.length < 6) {
-      setError("Enter the 6-digit code");
+    if (otp.trim().length < 4) {
+      setError("Enter the access code shown below.");
       return;
     }
     setError("");
     setLoading(true);
-    
     try {
-      // 1. Verify the code with Firebase
-      await window.confirmationResult.confirm(otp);
-      
-      // 2. Firebase success! Now bridge to our Chameleon backend 
-      // by passing our internal override code since frontend is verified.
-      const success = await loginWithPhone(phone, "123456");
+      const success = await loginWithPhone(phone.trim(), otp.trim());
       if (success) {
         navigate("/");
       } else {
-        setError("Dashboard verification failed.");
-        setLoading(false);
+        setError("Invalid code. Use the demo code: 123456");
       }
     } catch (err) {
-      setError("Invalid access code.");
+      console.error(err);
+      setError("Verification failed. Try again.");
+    } finally {
       setLoading(false);
     }
   };
 
+  // ── UI ────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen grid place-items-center relative overflow-hidden p-6">
       <div className="absolute inset-0 pointer-events-none opacity-40">
         <div className="absolute -top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-cyber-green/10 blur-3xl" />
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-cyber-red/10 blur-3xl" />
       </div>
-
-      <div id="recaptcha-container"></div>
 
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -122,6 +117,7 @@ export default function Login() {
         <div className="glass-strong rounded-md p-10 border relative overflow-hidden">
           <div className="absolute -top-px left-6 right-6 h-px bg-gradient-to-r from-transparent via-cyber-green to-transparent" />
 
+          {/* Logo */}
           <div className="flex items-center gap-3 mb-8">
             <div className="relative w-10 h-10 grid place-items-center bg-cyber-green/10 rounded-sm">
               <Activity className="w-5 h-5 text-cyber-green" strokeWidth={2.4} />
@@ -134,6 +130,7 @@ export default function Login() {
           </div>
 
           <AnimatePresence mode="wait">
+            {/* ── Step: auth ── */}
             {step === "auth" && (
               <motion.div key="auth" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
                 <h1 className="text-3xl font-black tracking-tighter text-foreground mb-2">SOC Access Required</h1>
@@ -141,13 +138,20 @@ export default function Login() {
                   Authenticate to monitor adversaries in real-time, replay intrusions, and orchestrate deception.
                 </p>
 
+                {error && (
+                  <div className="mb-4 text-destructive text-xs font-mono bg-destructive/10 border border-destructive/30 rounded-sm px-3 py-2">
+                    {error}
+                  </div>
+                )}
+
                 <div className="space-y-3">
+                  {/* Google */}
                   <button
                     onClick={handleGoogleLogin}
-                    className="w-full group relative overflow-hidden rounded-sm border border-cyber-green/40 bg-cyber-green/5 hover:bg-cyber-green/15 transition-all py-3.5 px-4 flex items-center justify-center gap-3"
-                    style={{ boxShadow: "0 0 0 0 transparent" }}
+                    disabled={loading}
+                    className="w-full group relative overflow-hidden rounded-sm border border-cyber-green/40 bg-cyber-green/5 hover:bg-cyber-green/15 transition-all py-3.5 px-4 flex items-center justify-center gap-3 disabled:opacity-50"
                     onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 0 24px rgba(var(--cyber-green-rgb),0.4)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "0 0 0 0 transparent")}
+                    onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -156,71 +160,86 @@ export default function Login() {
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                     </svg>
                     <span className="text-cyber-green font-mono text-sm uppercase tracking-[0.18em] font-semibold">
-                      Sign in with Google
+                      {loading ? "Authenticating..." : "Sign in with Google"}
                     </span>
                   </button>
 
+                  {/* Phone */}
                   <button
                     onClick={() => { setError(""); setStep("phone"); }}
                     className="w-full group relative overflow-hidden rounded-sm border border-border bg-border/30 hover:bg-border/60 transition-all py-3 px-4 flex items-center justify-center gap-3"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
-                      <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
-                      <path d="M12 18h.01"/>
+                      <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+                      <path d="M12 18h.01" />
                     </svg>
-                    <span className="text-foreground font-mono text-xs uppercase tracking-[0.15em]">
-                      Sign in with Phone
-                    </span>
+                    <span className="text-foreground font-mono text-xs uppercase tracking-[0.15em]">Sign in with Phone</span>
                   </button>
                 </div>
               </motion.div>
             )}
 
+            {/* ── Step: phone ── */}
             {step === "phone" && (
               <motion.div key="phone" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
                 <button onClick={() => setStep("auth")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6 text-sm font-mono uppercase tracking-widest">
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
                 <h1 className="text-2xl font-black tracking-tighter text-foreground mb-2">Mobile Access</h1>
-                <p className="text-sm text-muted-foreground mb-6">Enter your phone number to receive a real SMS access code via Firebase.</p>
-                
+                <p className="text-sm text-muted-foreground mb-1">Enter your phone number, then use the demo access code on the next screen.</p>
+
+                {/* Demo hint */}
+                <div className="mb-5 mt-3 bg-cyber-green/5 border border-cyber-green/20 rounded-sm px-3 py-2 text-xs font-mono text-cyber-green">
+                  ⚡ Demo code: <span className="font-bold tracking-widest">123456</span>
+                </div>
+
                 <div className="mb-6">
                   <div className="label-mono mb-2 text-cyber-green">Phone Number</div>
                   <input
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+15550000000"
+                    placeholder="+91 9876543210"
                     className="w-full bg-background border border-border px-4 py-3 text-sm font-mono text-foreground outline-none focus:border-cyber-green/50 rounded-sm"
                     autoFocus
+                    onKeyDown={(e) => e.key === "Enter" && handleSendCode()}
                   />
                   {error && <div className="text-destructive text-xs font-mono mt-2">{error}</div>}
                 </div>
 
-                <button onClick={handleSendCode} disabled={loading} className="btn-neon w-full py-3 text-sm">
-                  {loading ? "Sending SMS..." : "Send Secure Code"}
+                <button onClick={handleSendCode} className="btn-neon w-full py-3 text-sm">
+                  Continue →
                 </button>
               </motion.div>
             )}
 
+            {/* ── Step: otp ── */}
             {step === "otp" && (
               <motion.div key="otp" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
                 <button onClick={() => setStep("phone")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6 text-sm font-mono uppercase tracking-widest">
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
                 <h1 className="text-2xl font-black tracking-tighter text-foreground mb-2">Verify Identity</h1>
-                <p className="text-sm text-muted-foreground mb-6">Enter the 6-digit code sent to <span className="text-foreground font-mono">{phone}</span></p>
-                
+                <p className="text-sm text-muted-foreground mb-1">
+                  Signing in as <span className="text-foreground font-mono">{phone}</span>
+                </p>
+
+                {/* Demo hint */}
+                <div className="mb-5 mt-3 bg-cyber-green/5 border border-cyber-green/20 rounded-sm px-3 py-2 text-xs font-mono text-cyber-green">
+                  ⚡ Use demo access code: <span className="font-bold tracking-widest">123456</span>
+                </div>
+
                 <div className="mb-6">
                   <div className="label-mono mb-2 text-cyber-green">Access Code</div>
                   <input
                     type="text"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     placeholder="• • • • • •"
                     maxLength={6}
                     className="w-full bg-background border border-border px-4 py-3 text-center tracking-[0.5em] text-lg font-mono text-foreground outline-none focus:border-cyber-green/50 rounded-sm"
                     autoFocus
+                    onKeyDown={(e) => e.key === "Enter" && handleVerifyOtp()}
                   />
                   {error && <div className="text-destructive text-xs font-mono mt-2">{error}</div>}
                 </div>
