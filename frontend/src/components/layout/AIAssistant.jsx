@@ -5,15 +5,55 @@ import { Send, Bot, X, Loader2, ChevronRight } from "lucide-react";
 import { useSocStore, API } from "../../store/socStore";
 
 const SUGGESTIONS = [
-  "What is happening right now?",
-  "Who is the most dangerous attacker?",
-  "Recommend a deception action",
-  "Show MITRE techniques",
-  "Generate executive report",
-  "Show recent events",
-  "What countries are attacking?",
-  "Explain how Chameleon works",
+  // Live situational awareness
+  { label: "What is happening right now?",        category: "Status" },
+  { label: "Show recent events",                  category: "Status" },
+  { label: "How many active sessions are there?", category: "Status" },
+  { label: "Show honeypot health status",         category: "Status" },
+  // Threat & attacker intelligence
+  { label: "Who is the most dangerous attacker?", category: "Threat" },
+  { label: "What countries are attacking?",        category: "Threat" },
+  { label: "List top attacker IPs",               category: "Threat" },
+  { label: "Classify current threat actor",       category: "Threat" },
+  { label: "What tools is the attacker using?",   category: "Threat" },
+  { label: "Is this a targeted or automated attack?", category: "Threat" },
+  { label: "Summarize attacker behavior patterns", category: "Threat" },
+  // MITRE ATT&CK
+  { label: "Show MITRE techniques detected",      category: "MITRE" },
+  { label: "Which MITRE tactic is most active?",  category: "MITRE" },
+  { label: "Map attack to kill chain phases",     category: "MITRE" },
+  { label: "Are there lateral movement indicators?", category: "MITRE" },
+  { label: "Detect privilege escalation attempts", category: "MITRE" },
+  // Honeypot & deception ops
+  { label: "Recommend a deception action",        category: "Deception" },
+  { label: "Which honeypot is most engaged?",     category: "Deception" },
+  { label: "Should I deploy a new honeypot?",     category: "Deception" },
+  { label: "What honeytokens were triggered?",    category: "Deception" },
+  { label: "Show mutation history",               category: "Deception" },
+  // Remediation & response
+  { label: "What should I do immediately?",       category: "Response" },
+  { label: "Should I block this attacker?",       category: "Response" },
+  { label: "Generate an incident response plan",  category: "Response" },
+  { label: "Estimate attack risk level",          category: "Response" },
+  // Reporting
+  { label: "Generate executive report",           category: "Report" },
+  { label: "Summarize last 24 hours of activity", category: "Report" },
+  { label: "Export threat intelligence findings", category: "Report" },
+  // General
+  { label: "Explain how Chameleon works",         category: "Info" },
+  { label: "What is a honeypot?",                 category: "Info" },
+  { label: "How does Chameleon deceive attackers?", category: "Info" },
 ];
+
+const CATEGORY_COLORS = {
+  Status:    { border: "rgba(59,130,246,0.35)",  text: "#60a5fa" },
+  Threat:    { border: "rgba(239,68,68,0.35)",   text: "#f87171" },
+  MITRE:     { border: "rgba(168,85,247,0.35)",  text: "#c084fc" },
+  Deception: { border: "rgba(57,255,20,0.35)",   text: "#39ff14" },
+  Response:  { border: "rgba(251,146,60,0.35)",  text: "#fb923c" },
+  Report:    { border: "rgba(250,204,21,0.35)",  text: "#facc15" },
+  Info:      { border: "rgba(255,255,255,0.12)", text: "#71717a" },
+};
 
 /** Lightweight inline markdown → JSX renderer */
 function MarkdownText({ text }) {
@@ -199,20 +239,30 @@ export default function AIAssistant() {
 
       {/* Suggestions */}
       <div className="px-4 pt-2 pb-1 border-t border-white/5 shrink-0">
-        <div className="text-[8px] font-mono text-zinc-600 uppercase tracking-widest mb-1.5">Quick queries</div>
-        <div className="flex flex-wrap gap-1.5 max-h-[64px] overflow-hidden">
-          {SUGGESTIONS.map((s) => (
-            <button
-              key={s}
-              onClick={() => send(s)}
-              disabled={loading}
-              className="text-[9px] font-mono uppercase tracking-wider px-2 py-1 rounded-sm transition-all disabled:opacity-40"
-              style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#71717a" }}
-              onMouseEnter={e => { e.target.style.borderColor = "rgba(57,255,20,0.4)"; e.target.style.color = "#39ff14"; }}
-              onMouseLeave={e => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; e.target.style.color = "#71717a"; }}
-            >
-              {s}
-            </button>
+        <div className="text-[8px] font-mono text-zinc-600 uppercase tracking-widest mb-2">Quick queries</div>
+        <div className="flex flex-col gap-3 max-h-[180px] overflow-y-auto pr-1"
+          style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(57,255,20,0.2) transparent" }}>
+          {Object.keys(CATEGORY_COLORS).map((cat) => (
+            <div key={cat}>
+              <div className="text-[7px] font-mono uppercase tracking-widest mb-1" style={{ color: CATEGORY_COLORS[cat].text, opacity: 0.7 }}>
+                {cat}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {SUGGESTIONS.filter(s => s.category === cat).map((s) => (
+                  <button
+                    key={s.label}
+                    onClick={() => send(s.label)}
+                    disabled={loading}
+                    className="text-[9px] font-mono px-2 py-1 rounded-sm transition-all disabled:opacity-40"
+                    style={{ border: `1px solid ${CATEGORY_COLORS[cat].border}`, color: CATEGORY_COLORS[cat].text, opacity: 0.7 }}
+                    onMouseEnter={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.background = `${CATEGORY_COLORS[cat].text}10`; }}
+                    onMouseLeave={e => { e.currentTarget.style.opacity = "0.7"; e.currentTarget.style.background = "transparent"; }}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>

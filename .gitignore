@@ -41,6 +41,31 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 dump.rdb
+*.log
+backend/backend.log
+frontend/frontend.log
+
+# macOS artifacts
+__MACOSX/
+._*
+
+# Platform scaffolding (Emergent)
+.emergent/
+
+# Test output / reports
+test_reports/
+test_result.md
+auth_testing.md
+
+# Design/scaffold tool files
+design_guidelines.json
+
+# Frontend build output (use `npm run build` to regenerate)
+frontend/build/
+
+# Empty scaffold placeholder folders
+frontend/plugins/
+memory/
 
 # System files
 .DS_Store
