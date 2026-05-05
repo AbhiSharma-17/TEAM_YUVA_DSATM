@@ -1,0 +1,123 @@
+{
+  "theme_and_archetype": {
+    "domain": "Cybersecurity",
+    "theme": "dark",
+    "archetype": "7 (Electric & Neon / Premium Cyberpunk)",
+    "mood": "Command-center, high-stakes, hyper-advanced, mysterious yet authoritative",
+    "rationale": "The user explicitly requested a Premium Dark Cyberpunk theme, background #0A0A0A, and neon accents. This perfectly matches Archetype 7, blending elite performance with an aggressive, futuristic aesthetic."
+  },
+  "colors": {
+    "backgrounds": {
+      "base": "#0A0A0A",
+      "surface": "#111111",
+      "surface_glass": "rgba(17, 17, 17, 0.6)",
+      "overlay": "rgba(0, 0, 0, 0.7)"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#A1A1AA",
+      "muted": "#52525B"
+    },
+    "accents": {
+      "active_safe": "#39ff14",
+      "critical_threat": "#ff003c",
+      "medium_risk": "#ff9f1c",
+      "cyber_blue": "#00f0ff"
+    },
+    "borders": {
+      "default": "rgba(255, 255, 255, 0.1)",
+      "active": "rgba(57, 255, 20, 0.4)",
+      "critical": "rgba(255, 0, 60, 0.4)"
+    }
+  },
+  "typography": {
+    "rules": "High contrast font pairing. Smooth UI reading vs Monospaced Terminal data.",
+    "fonts": {
+      "ui_main": "Inter",
+      "terminal_data": "JetBrains Mono"
+    },
+    "scales": {
+      "h1": "text-4xl sm:text-5xl font-black tracking-tighter",
+      "h2": "text-2xl sm:text-3xl font-bold tracking-tight",
+      "h3": "text-xl font-semibold tracking-tight",
+      "body": "text-sm sm:text-base text-zinc-300 font-medium",
+      "terminal": "text-xs sm:text-sm font-mono tracking-wider text-green-400",
+      "labels": "text-xs uppercase tracking-[0.2em] font-bold text-zinc-500"
+    }
+  },
+  "spacing_and_layout": {
+    "strategy": "The 'Control Room' Grid (Mode B)",
+    "gaps": "gap-4 md:gap-6",
+    "padding": "p-4 md:p-6",
+    "radius": "rounded-none md:rounded-lg",
+    "panels": "flex flex-col h-full bg-[#111111]/80 backdrop-blur-xl border border-white/5 shadow-2xl overflow-hidden",
+    "hierarchy": "Always ensure map/graph takes up central prominent space, surrounded by dense analytical widgets on side panels."
+  },
+  "visual_effects": {
+    "glassmorphism": "Use backdrop-blur-xl and bg-black/40 with 1px border-white/10. Do not use muddy grey transparency.",
+    "glow_hover": "hover:shadow-[0_0_15px_rgba(57,255,20,0.5)] transition-shadow duration-300",
+    "pulse_safe": "animate-pulse shadow-[0_0_10px_rgba(57,255,20,0.7)]",
+    "pulse_critical": "animate-pulse shadow-[0_0_15px_rgba(255,0,60,0.9)]",
+    "depth_over_borders": "Rely on ambient shadows (shadow-[0_4px_30px_rgba(0,0,0,0.5)]) and inner borders (ring-1 ring-white/5) instead of thick solid borders.",
+    "scanlines": "Optional repeating-linear-gradient overlay on terminal panels to give CRT retro-futurism feel."
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/50 hover:bg-[#39ff14]/20 hover:shadow-[0_0_15px_rgba(57,255,20,0.5)] transition-all uppercase text-xs tracking-widest",
+      "critical": "bg-[#ff003c]/10 text-[#ff003c] border border-[#ff003c]/50 hover:bg-[#ff003c]/20 hover:shadow-[0_0_15px_rgba(255,0,60,0.5)] transition-all uppercase text-xs tracking-widest"
+    },
+    "cards": {
+      "base": "bg-[#111111]/60 backdrop-blur-md border border-white/5 p-4 rounded-lg relative overflow-hidden",
+      "interactive": "hover:border-[#39ff14]/30 cursor-pointer transition-colors"
+    },
+    "terminal_feed": {
+      "container": "font-mono text-xs bg-black/80 border border-white/10 p-4 rounded-lg overflow-y-auto",
+      "text": "text-[#39ff14] whitespace-pre-wrap",
+      "typing_animation": "Use framer-motion staggerChildren for character-by-character typing effect on critical replays."
+    },
+    "map_2d": {
+      "style": "Lightweight SVG or Canvas based 2D world map (e.g., using react-simple-maps or custom SVG). Nodes are glowing dots. Attack arcs use curved SVG paths with stroke-dasharray animations for flowing data effect.",
+      "colors": "Map fill: #111111, Map stroke: #333333, Attack Arc: #ff003c, Safe node: #39ff14"
+    }
+  },
+  "animations": {
+    "library": "Framer Motion",
+    "page_transitions": "Fade in with slight upward translation (opacity: 0, y: 10) to (opacity: 1, y: 0) over 0.4s.",
+    "list_stagger": "Staggered entrance for lists and feed items (stagger 0.05s).",
+    "typing": "Cinematic terminal replay needs true typing effect (character by character reveal).",
+    "micro_interactions": "Scale button down to 0.98 on tap/click."
+  },
+  "icons": {
+    "library": "lucide-react",
+    "style": "Clean, line-based, stroke-width 1.5, sized accurately to text.",
+    "usage": "Use icons for every section header, nav item, and metric widget to enhance the tech feel."
+  },
+  "media": {
+    "images": [
+      {
+        "category": "background",
+        "url": "https://static.prod-images.emergentagent.com/jobs/ad6ae8e4-1043-4427-98c9-cdd0a891e857/images/40224cc2e5e4ed3ecf41ee26df1517747b099b7c89f65d4537393c657fd7f219.png",
+        "description": "Abstract premium dark cyberpunk background, extreme minimalism, deep black void with very subtle neon green and amber glowing grid lines. Use as a fixed background for the app shell with opacity-30 or opacity-20 to maintain readability."
+      },
+      {
+        "category": "attacker_avatar",
+        "url": "https://images.unsplash.com/photo-1741715588278-0927d007951e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODh8MHwxfHNlYXJjaHwyfHxoYWNrZXIlMjBzaWxob3VldHRlJTIwZGFya3xlbnwwfHx8fDE3Nzc5MTQ1Njh8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Hacker silhouette. Use in the Intruder Sessions or Attacker Profile modal/panel as a placeholder avatar for unknown threats."
+      },
+      {
+        "category": "honey_node",
+        "url": "https://static.prod-images.emergentagent.com/jobs/ad6ae8e4-1043-4427-98c9-cdd0a891e857/images/eec6f80d8a5b9a8a028d57c39eb9af0bc3b979982b1d6b5fe8b2e5461b0e6b8c.png",
+        "description": "Cybersecurity honey pot glowing node abstract. Use this as a decorative element in the Deception Fabric UI or AI Lure Generator modal."
+      }
+    ]
+  },
+  "instructions_to_main_agent": {
+    "general": "Build a responsive React SOC dashboard using Tailwind and Framer Motion. Ensure components have data-testid attributes.",
+    "navigation": "Use a collapsible sidebar or sleek top nav. CTF Mode toggle must be globally visible.",
+    "map": "Implement a 2D map component (NOT 3D globe) utilizing SVG. Show source to honeypot attack arcs.",
+    "terminal": "Implement an auto-scrolling terminal feed in the bottom left, using JetBrains Mono font and neon colors.",
+    "data_mocking": "Simulate WebSocket data updates using setInterval to randomly update attack numbers and generate logs in the live feed. Mock AI predictions and Lure generation.",
+    "accessibility": "Ensure text contrast meets APCA/WCAG standards, especially over glassmorphism panels. Apply focus states.",
+    "shadcn_overrides": "Override shadcn default components (like buttons, dialogs) to remove border-radius if needed or match the neon border aesthetic. Do not use generic grey card components; use glass panels."
+  }
+}
