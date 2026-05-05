@@ -143,6 +143,25 @@ export const useSocStore = create((set, get) => ({
             break;
           case "attack_event":
             get().addEvent(data);
+            // Also push command into the session's commands array so the terminal panel updates
+            {
+              const sessions = get().sessions;
+              const sidx = sessions.findIndex((s) => s.id === data.session_id);
+              if (sidx >= 0) {
+                // Extract the raw command text — strip leading "$ " or "[ip] executed: " prefix
+                let rawCmd = data.message || "";
+                if (rawCmd.startsWith("$ ")) rawCmd = rawCmd.slice(2);
+                else if (rawCmd.includes(" executed: ")) rawCmd = rawCmd.split(" executed: ").slice(1).join(" executed: ");
+                const isDanger = data.severity === "crit";
+                const newCmd = { ts: data.ts, cmd: rawCmd, danger: isDanger };
+                const updated = [...sessions];
+                updated[sidx] = {
+                  ...updated[sidx],
+                  commands: [...(updated[sidx].commands || []), newCmd].slice(-30),
+                };
+                set({ sessions: updated });
+              }
+            }
             break;
           case "stage_change": {
             const list = get().sessions.map((s) => (s.id === data.session_id ? { ...s, stage: data.to } : s));

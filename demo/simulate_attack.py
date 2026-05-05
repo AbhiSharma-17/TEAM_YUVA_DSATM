@@ -13,7 +13,7 @@ def print_err(msg):
 def main():
     print("\n\033[1m\033[93mCHAMELEON ATTACK SIMULATOR (HACKATHON DEMO)\033[0m\n")
     print_hack("Initializing external threat payload...")
-    time.sleep(1.5)
+    time.sleep(0.3)  # was 1.5s
 
     # Step 1: Launch Attack
     attack_payload = {
@@ -34,7 +34,7 @@ def main():
         print_hack(f"Attack successful. Session created: {session_id}")
         print_hack("Look at the globe! You should see a red laser arc flying from India to the US.")
     except Exception as e:
-        print_err(f"Connection failed. Is the backend running on port 5000? {e}")
+        print_err(f"Connection failed. Is the backend running on port 8000? {e}")
         sys.exit(1)
 
     # Step 2: Stream Commands
@@ -48,18 +48,18 @@ def main():
     ]
 
     print("\n\033[1m\033[94m[+] Streaming Interactive Session Commands...\033[0m")
-    time.sleep(2)
+    time.sleep(0.5)  # was 2s
 
     for cmd in commands:
         print(f"   > Typing: {cmd}")
-        time.sleep(len(cmd) * 0.1) # Simulate typing delay
+        time.sleep(len(cmd) * 0.02)  # was 0.1s/char — now 5x faster typing
         
         requests.post(f"{API_URL}/simulate/command", json={
             "session_id": session_id,
             "command": cmd
         })
         
-        time.sleep(1.5) # Wait before next command
+        time.sleep(0.4)  # was 1.5s — just enough to see each event pop on the dashboard
         
     print("\n\033[92m[+] Attack simulation complete! Check the Intruder Sessions page.\033[0m\n")
 
