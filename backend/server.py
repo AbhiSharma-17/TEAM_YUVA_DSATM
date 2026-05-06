@@ -25,6 +25,15 @@ db = client[os.environ["DB_NAME"]]
 EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY", "")
 
 app = FastAPI(title="Chameleon Adaptive Honeypot")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 api_router = APIRouter(prefix="/api")
 
 logger = logging.getLogger("chameleon")
